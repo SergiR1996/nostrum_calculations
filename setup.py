@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="bsc_calculations",
+    name="nostrum_calculations",
     version="0.0.1",
     author="Martin Floor",
     author_email="martinfloor@gmail.com",
