@@ -5,4 +5,5 @@ from . import cte_power
 from . import amd
 from . import nord4
 from . import mn5
+from . import bright
 from . import tricks
