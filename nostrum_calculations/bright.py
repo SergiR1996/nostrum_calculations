@@ -296,6 +296,7 @@ def jobArrays(
         sf.write("#SBATCH --ntasks " + str(ntasks) + "\n")
         if "gpu" in partition:
             sf.write("#SBATCH --gres gpu:" + str(gpus) + "\n")
+            sf.write("#SBATCH --constraint=gpu " + "\n")
             cpus = gpus * 8
             sf.write("#SBATCH --cpus-per-task " + str(cpus) +  "\n")
         if mem_per_cpu != None:
@@ -364,16 +365,28 @@ def setUpPELEForBright(
     general_script="pele_slurm.sh",
     scripts_folder="pele_slurm_scripts",
     print_name=False,
-    partition='gp_bscls',
+    partition='standard-cpu',
     **kwargs
 ):
     """
-    Creates submission scripts for Marenostrum for each PELE job inside the jobs variable.
+    Creates submission scripts for Bright for each PELE job inside the jobs variable.
 
-    Parameters
+     Parameters
     ==========
     jobs : list
         Commands for run PELE. This is the output of the setUpPELECalculation() function.
+    general_script : str
+        Name of the script file to be created.
+    scripts_folder : str
+        Name of the folder where the scripts will be saved.
+    print_name : bool
+        Print the name of the job in the submission script.
+    cpus: int
+        Number of cpus per task. Default 64.
+    time: int
+        Maximum time per job, default 35 hours.
+    nodes: str
+        Name of the node to use. node005 has different architecture, if node005 is use with another node no output will be written. Default node005
     """
 
     if not os.path.exists(scripts_folder):
@@ -419,6 +432,7 @@ def singleJob(
     program=None,
     pathMN=None,
     exports=None,
+    nodes=None
 ):
 
     # Check PYTHONPATH variable
@@ -434,7 +448,13 @@ def singleJob(
             raise ValueError(
                 "Program not found. Available progams: " + " ,".join(available_programs)
             )
-
+    available_nodes = ["node001","node002", "node003","node004","node005"]
+    if nodes != None:
+        if nodes not in available_nodes:
+            raise ValueError(
+                "Node ot found. Use one of the available nodes: " + " ,".join(available_nodes)
+            )
+        
     if program == "pele":
         if modules == None:
             modules = []
@@ -444,12 +464,13 @@ def singleJob(
             "Schrodinger"
         ]
         conda_env = "/home/sroda/.conda/envs/pele_platform_2025"
+        #I think these are not needed
         exports = ['PELE="/eb/x86_64/software/PELE/1.8.1/"',
                    'PELE_EXEC="/eb/x86_64/software/PELE/1.8.1/bin/PELE_mpi"',
                    'PELE_LICENSE="/shared/work/NBD_Utilities/PELE/licenses"',
                    'SRUN=1']
 
-    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-gpu"]
+    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-gpu", "standard-cpu"]
     if job_name == None:
         raise ValueError("job_name == None. You need to specify a name for the job")
     if output == None:
@@ -529,6 +550,12 @@ def singleJob(
             sf.write("#SBATCH --mem-per-cpu " + str(mem_per_cpu) + "\n")
         if threads != None:
             sf.write("#SBATCH -c " + str(threads) + "\n")
+        if nodes != None:
+            sf.write("#SBATCH --nodelist=" + str(nodes) +"\n")
+            sf.write("#SBATCH --nodes=1" + "\n")
+        else:
+            sf.write("#SBATCH --nodelist=node005 " +"\n")
+            sf.write("#SBATCH --nodes=1" + "\n")
         sf.write("#SBATCH --output=" + output + "_%a_%A.out\n")
         sf.write("#SBATCH --error=" + output + "_%a_%A.err\n")
         if mail != None:
