@@ -12,7 +12,7 @@ def jobArrays(
     cpus_per_task=None,
     output=None,
     mail=None,
-    time=48,
+    time=None,
     module_purge=False,
     modules=None,
     conda_env=None,
