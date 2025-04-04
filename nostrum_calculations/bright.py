@@ -231,7 +231,7 @@ def jobArrays(
         extras = ["source activate /home/sroda/.conda/envs/PLACER"]
 
     #! Partitions
-    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-gpu"]
+    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-cpu"]
 
     if job_name == None:
         raise ValueError("job_name == None. You need to specify a name for the job")
@@ -381,8 +381,8 @@ def setUpPELEForBright(
         Name of the folder where the scripts will be saved.
     print_name : bool
         Print the name of the job in the submission script.
-    cpus: int
-        Number of cpus per task. Default 64.
+    ntasks: int
+        Number of tasks. For PELE is equivalent at number of CPUs.
     time: int
         Maximum time per job, default 35 hours.
     nodes: str
@@ -417,7 +417,7 @@ def singleJob(
     script_name=None,
     job_name=None,
     ntasks=1,
-    cpus_per_task=112,
+    cpus_per_task=None,
     gpus=1,
     mem_per_cpu=None,
     partition=None,
@@ -470,7 +470,7 @@ def singleJob(
                    'PELE_LICENSE="/shared/work/NBD_Utilities/PELE/licenses"',
                    'SRUN=1']
 
-    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-gpu", "standard-cpu"]
+    available_partitions = ["short", "gpu_short", "standard-gpu", "standard-cpu"]
     if job_name == None:
         raise ValueError("job_name == None. You need to specify a name for the job")
     if output == None:
@@ -541,7 +541,8 @@ def singleJob(
         sf.write("#SBATCH --partition=" + partition + "\n")
         sf.write("#SBATCH --time=" + str(time[0]) + ":" + str(time[1]) + ":00\n")
         sf.write("#SBATCH --ntasks " + str(ntasks) + "\n")
-        sf.write("#SBATCH --cpus-per-task " + str(cpus_per_task) + "\n")
+        if cpus_per_task != None:
+            sf.write("#SBATCH --cpus-per-task " + str(cpus_per_task) + "\n")
         if "gpu" in partition:
             sf.write("#SBATCH --gres gpu:" + str(gpus) + "\n")
             cpus = gpus*8
@@ -569,7 +570,8 @@ def singleJob(
                 sf.write("module unload " + module + "\n")
             sf.write("\n")
         if modules != None:
-            sf.write("module purge \n")
+            if program != "pele":
+                sf.write("module purge \n")
             for module in modules:
                 sf.write("module load " + module + "\n")
             sf.write("\n")
